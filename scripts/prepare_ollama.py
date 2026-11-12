@@ -40,8 +40,8 @@ def main():
     args = parser.parse_args()
     load_dotenv(Path(__file__).resolve().parent.parent / ".env")
     base = os.getenv("OLLAMA_BASE_URL", "http://192.168.1.111:11434/v1").rstrip("/").removesuffix("/v1")
-    original = os.getenv("OLLAMA_BASE_MODEL", "qwen3.5:4b-q4_K_M")
-    target = os.getenv("OLLAMA_MODEL", "shopping-qwen3.5:latest")
+    original = os.getenv("OLLAMA_BASE_MODEL", "qwen3.5:9b-q4_K_M")
+    target = os.getenv("OLLAMA_MODEL", "shopping-qwen3.5-9b:latest")
     embedding = os.getenv("OLLAMA_EMBEDDING_MODEL", "nomic-embed-text:latest")
     context = int(os.getenv("OLLAMA_CONTEXT_LENGTH", "65536"))
     if context < 64000:

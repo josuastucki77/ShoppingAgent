@@ -11,8 +11,8 @@ Prüfstand: 12. November 2026. Das Repository war zu Beginn leer.
 | WSL2 | Inzwischen vom Nutzer installiert | Vorhandene Installation verwenden |
 | Docker Desktop / Compose | Compose v5.7.0, Linux-Engine läuft | Containerstart erfolgreich geprüft |
 | Ollama | `192.168.1.111:11434`, Version 0.40.16 nach Nutzer-Update erreichbar | Vorhandenen Server verwenden |
-| Chatmodell | `qwen3.5:4b-q4_K_M` heruntergeladen | Qwen als Basis; Modell-, Schema- und MCP-Tests bestanden |
-| Kontext | Separate Variante `shopping-qwen3.5:latest` mit 65.536 Tokens eingerichtet | Hermes verlangt mindestens 64.000 Tokens |
+| Chatmodell | `qwen3.5:9b-q4_K_M` heruntergeladen und ausgewählt | Modell-, Schema-, MCP- und abschließender Shopping-Test bestanden |
+| Kontext | Separate Variante `shopping-qwen3.5-9b:latest` mit 65.536 Tokens eingerichtet | Hermes verlangt mindestens 64.000 Tokens |
 | Embeddings | `nomic-embed-text:latest` vorhanden; 768 Dimensionen erfolgreich geprüft | Bereits eingerichtet |
 | Galaxus MCP | Initialisierung und `search_products`-Werkzeugliste auch aus Docker erfolgreich | Bereits verbunden |
 
@@ -65,10 +65,15 @@ LAN-Zugriff auf TCP-Port 11434 des Ollama-Servers.
 ## Geprüfter Betrieb
 
 Die Ollama-VM hat laut Nutzer eine RTX 3070 per PCI-Passthrough und 16 GB RAM.
-Qwen3.5-4B Q4_K_M belegt bei 65.536 Kontext-Tokens gemessen 5,22 GB, vollständig
-auf der GPU. Die Einzeltests für Deutsch, längeren Eingangstext, Werkzeugaufrufe,
-strukturierte Antworten und echte Galaxus-Suche bestehen. Honcho hat mit Qwen
-fiktive Vorlieben extrahiert und in einer zweiten Sitzung korrekt bereitgestellt.
+Qwen3.5-9B Q4_K_M belegt bei 65.536 Kontext-Tokens gemessen 8,61 GB gesamt,
+davon 6,82 GB auf der GPU. Es nutzt zusätzlich CPU/RAM. Die Einzeltests für
+Deutsch, längeren Eingangstext, Werkzeugaufrufe, strukturierte Antworten und
+echte Galaxus-Suche bestehen. Der abschließende Shopping-Lauf lieferte in
+rund 160 Sekunden eine Empfehlung mit verifiziertem Preis und Produktlink.
+Die schnellere 4B-Variante besteht Einzeltests, ist im Agenten aber weniger zuverlässig.
+Der isolierte Honcho-Test mit dem dauerhaft ausgewählten 9B-Modell ist ebenfalls
+bestanden: Interessen, Budget und abgelehnte Cloud-Abos wurden in einer zweiten
+Sitzung korrekt abgerufen (26,70 Sekunden einschließlich Worker-Wartezeit).
 Messungen und Grenzen: [MODELLTEST.md](MODELLTEST.md).
 
 Das vollständige PowerShell-Setup wurde mehrfach erfolgreich ausgeführt.

@@ -5,7 +5,7 @@ offiziellen Hermes-Image, dem offiziellen Galaxus-MCP und lokalem Honcho.
 Hermes und Honcho verwenden den vorhandenen Ollama-Server
 `192.168.1.111:11434`; ein Cloud-API-Key ist in dieser Variante nicht erforderlich.
 
-**Stand:** Qwen3.5-4B ist auf der RTX 3070 eingerichtet und mit echten
+**Stand:** Qwen3.5-9B ist auf der RTX 3070 eingerichtet und mit echten
 Modell-, MCP- und Honcho-Aufrufen geprüft. Messungen und Grenzen stehen im
 [Modelltest](docs/MODELLTEST.md); den Installationsstand dokumentieren die
 [PC-Voraussetzungen](docs/VORAUSSETZUNGEN.md).
@@ -14,7 +14,7 @@ Modell-, MCP- und Honcho-Aufrufen geprüft. Messungen und Grenzen stehen im
 
 - Docker Desktop mit WSL2, laufender Docker Engine und Linux-Containern.
 - Verbindung vom PC **und aus Docker** zu `192.168.1.111:11434`.
-- Dort aktuelles Ollama, `qwen3.5:4b-q4_K_M`, ein Embedding-Modell und ausreichend Arbeitsspeicher
+- Dort aktuelles Ollama, `qwen3.5:9b-q4_K_M`, ein Embedding-Modell und ausreichend Arbeitsspeicher
   für ein Kontextfenster von 65.536 Tokens. Hermes verlangt mindestens 64.000.
   Die größere Kontextvariante wird
   separat angelegt und verändert das ursprüngliche Modell nicht.
@@ -39,11 +39,15 @@ python scripts/check_services.py --inference
 
 Den Kopierbefehl nur ausführen, wenn `.env` noch nicht existiert. Das Setup kann
 die Datei auch selbst anlegen. `--apply` lädt das fehlende Basismodell
-`qwen3.5:4b-q4_K_M` (rund 3,3 GB) und `nomic-embed-text:latest`
+`qwen3.5:9b-q4_K_M` (rund 6,6 GB) und `nomic-embed-text:latest`
 (ungefähr 274 MB) auf den Ollama-Server und erzeugt
-die Variante `shopping-qwen3.5:latest` mit `num_ctx=65536` und Temperatur 0,2. Bereits vorhandene
+die Variante `shopping-qwen3.5-9b:latest` mit `num_ctx=65536` und Temperatur 0,2. Bereits vorhandene
 Modelle werden erhalten. Ohne `--apply` zeigt das Script nur die geplanten Werte.
 Ein größerer Kontext braucht auf dem Ollama-Rechner zusätzlich RAM/VRAM.
+Bei der getesteten RTX 3070 nutzt 9B auch CPU/RAM: gemessen etwa 8,61 GB gesamt,
+davon 6,82 GB auf der GPU. Der vollständige Abschlusstest dauerte rund 160 Sekunden.
+Der Denkmodus bleibt ausgeschaltet. Die schnellere 4B-Variante war im Agenten
+inhaltlich weniger zuverlässig; Details und frühere Fehlversuche stehen im Modelltest.
 
 Für eine bereits angelegte Variante mit kleinerem Kontext:
 

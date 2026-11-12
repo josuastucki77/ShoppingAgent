@@ -8,6 +8,16 @@ Für Hermes werden separate Modellvarianten mit 65.536 Kontexttokens angelegt.
 Downloadgröße und Laufzeitspeicher sind unterschiedliche Größen. Die Messwerte
 sind einzelne lokale Durchläufe, keine repräsentative Leistungsstudie.
 
+## Auswahl
+
+Als Standard ist **Qwen3.5-9B Q4_K_M** eingerichtet, Alias
+`shopping-qwen3.5-9b:latest`, mit ausgeschaltetem Denkmodus. Es ist auf dieser
+Hardware langsamer als 4B, hat den abschließenden Shopping-Test aber mit
+belegter Produktauswahl, Preis, vollständigem Link und passender Begründung bestanden.
+Es nutzt bei 65.536 Kontexttokens zusätzlich CPU/RAM. Für den täglichen Job
+ist die gemessene Laufzeit von rund 160 Sekunden vertretbar; für schnelle Chats
+ist die 4B-Variante deutlich flotter, aber im getesteten Agenten weniger zuverlässig.
+
 ## Qwen3.5-4B Q4_K_M
 
 Basis: `qwen3.5:4b-q4_K_M`; Variante: `shopping-qwen3.5:latest`, Temperatur 0,2.
@@ -56,11 +66,38 @@ Zusätzlich heruntergeladen und mit denselben sieben Einzeltests geprüft:
 | Einfacher Werkzeugaufruf | 3 von 3 bestanden; 2,4–3,0 s |
 | Strukturierte JSON-Vorlieben | bestanden; 4,984 s |
 | Galaxus-Schema plus echter MCP-Aufruf | bestanden; 11,110 s Modellzeit |
+| Honcho nach dauerhafter Umstellung auf 9B | bestanden; 26,70 s, Vorlieben in zweiter Sitzung korrekt abgerufen |
 
 9B nutzt bei diesem Kontext auch CPU/RAM und ist deutlich langsamer als 4B.
 Die Rohmessung liegt unter `.runtime/benchmarks/qwen35-9b.json`.
 Ein vollständiger Lauf mit `reasoning_effort=low` wurde nach 282,04 s ohne
 fertige Empfehlung kontrolliert abgebrochen. Der Zeitplan blieb erhalten.
+
+Ein erster vollständiger Lauf ohne Denkmodus endete nach 89,64 s: Er vermied
+eine frühere Empfehlung korrekt, ließ aber den geforderten Produktlink weg.
+Danach wurde eine feste Ausgabevorlage ergänzt. Der abschließende Lauf dauerte
+159,82 s und wählte eine Lighty-Sensorlampe für CHF 24.90. Name, Preis,
+vollständiger `pageUrl`, Budget und das Fehlen früherer Berichte zu diesem
+Produkt wurden anhand der tatsächlichen MCP-Antwort und Berichtshistorie geprüft.
+Die beschriebene Bauweise und bedarfsgerechte Beleuchtung stehen in der Quelle;
+Interesse an Smart Home und Budget stammen aus dem Honcho-Kontext.
+Anschließend wurde das vollständige Setup mit 9B für Hermes und alle Honcho-
+Textmodelle erfolgreich ausgeführt. Der zusätzliche isolierte Honcho-Test
+bestätigte Interessen, CHF 149 Budget und Ablehnung verpflichtender Cloud-Abos;
+die Testdaten wurden zur Löschung vorgemerkt. Alle fünf Dienste laufen,
+die drei vorhandenen Healthchecks sind grün. Der Tagesjob bleibt bei 09:00
+Europe/Zurich, mit `reasoning_effort=none` und der festen Ausgabevorlage.
+
+Der Agent recherchierte nach den bereits bekannten Hubs erneut nach Sensoren.
+Dabei forderte er trotz `first=3` im Prompt zehn Treffer an und korrigierte einen
+unvollständigen Datei-Aufruf selbst. Der bestandene Abschlusslauf belegt daher
+keine Fehlerfreiheit über beliebige weitere Läufe.
+
+Lokale Nachweise:
+
+- Bericht: `output/817a81e79243/2026-11-12_20-24-48.md`
+- Produktquelle und Prüfresultate: `output/model-validation-qwen35-9b.json`
+- Isolierter Gedächtnistest: `output/model-memory-test-qwen35-9b.json`
 
 ## Honcho und Cron
 
@@ -88,7 +125,7 @@ Ein kompletter Neustart mit persönlichem Hermes-Chat ist separat zu demonstrier
 ## Nachvollziehen
 
 ```powershell
-python scripts/benchmark_model.py --model shopping-qwen3.5:latest --with-galaxus --output .runtime/benchmarks/qwen35.json
+python scripts/benchmark_model.py --model shopping-qwen3.5-9b:latest --with-galaxus --output .runtime/benchmarks/qwen35-9b.json
 docker compose exec -T -u hermes hermes /opt/hermes/.venv/bin/python /project/scripts/verify_memory.py
 docker compose exec -T -u hermes hermes hermes cron run shopping-daily
 python -m unittest discover -s tests -v

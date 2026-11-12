@@ -60,7 +60,7 @@ def configure(home, project, env, stock_soul=None):
                          "Identitaetswechsel muss bewusst separat vorgenommen werden.")
     update_mapping(home / "config.yaml", {
         "model": {
-            "provider": "custom", "default": env.get("OLLAMA_MODEL", "shopping-qwen3.5:latest"),
+            "provider": "custom", "default": env.get("OLLAMA_MODEL", "shopping-qwen3.5-9b:latest"),
             "base_url": env.get("OLLAMA_BASE_URL", "http://192.168.1.111:11434/v1"),
             "api_key": "${OPENAI_API_KEY}",
             "ollama_num_ctx": int(env.get("OLLAMA_CONTEXT_LENGTH", "65536")),
@@ -105,7 +105,7 @@ def configure(home, project, env, stock_soul=None):
         previous = guide.read_text(encoding="utf-8") if guide.exists() else ""
         if not guide.exists() or previous.startswith(managed_marker):
             content = guide_source.read_text(encoding="utf-8").replace(
-                "{{MODEL}}", env.get("OLLAMA_MODEL", "shopping-qwen3.5:latest"))
+                "{{MODEL}}", env.get("OLLAMA_MODEL", "shopping-qwen3.5-9b:latest"))
             if content != previous:
                 if guide.exists():
                     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")

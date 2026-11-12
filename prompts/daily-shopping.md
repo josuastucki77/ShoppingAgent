@@ -31,3 +31,17 @@ Erstelle die heutige persoenliche Produktempfehlung auf Deutsch.
 
 Hermes speichert die abschliessende Antwort durch --deliver local automatisch
 in /opt/data/cron/output. Speichere keine API-Keys oder Zugangsdaten im Ergebnis.
+
+Verwende fuer die abschliessende Antwort genau diese Vorlage. Der Produktlink
+ist zwingend; kopiere den vollstaendigen pageUrl des gewaehlten Treffers.
+Keine Voranalyse, Kandidatenliste oder zusaetzlichen Vergleiche ausgeben.
+Setze keine vorhandene Software oder persoenliche Vorliebe voraus, die Honcho
+nicht ausdruecklich nennt. Beschreibe Kompatibilitaet als Eigenschaft des
+Produkts, ohne zu behaupten, dass der Nutzer diese Plattform bereits verwendet.
+
+**Produkt:** [Name und Marke aus dem Treffer]
+**Preis:** CHF [amountInclusive aus dem Treffer]
+**Link:** [vollstaendiger pageUrl aus demselben Treffer]
+**Warum passend:** [Ein Satz mit einer belegten Produkteigenschaft. Ein Satz
+zum bekannten Interesse und Budget aus honcho_context.]
+**Quelle:** mcp__galaxus__search_products

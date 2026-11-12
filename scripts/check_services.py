@@ -36,7 +36,7 @@ def json_request(url, body=None, timeout=15):
 def check_ollama(inference=False):
     base = os.getenv("OLLAMA_BASE_URL", "http://192.168.1.111:11434/v1").rstrip("/")
     native = base.removesuffix("/v1")
-    model = os.getenv("OLLAMA_MODEL", "shopping-qwen3.5:latest")
+    model = os.getenv("OLLAMA_MODEL", "shopping-qwen3.5-9b:latest")
     embedding = os.getenv("OLLAMA_EMBEDDING_MODEL", "nomic-embed-text:latest")
     names = {m["name"] for m in json_request(native + "/api/tags")["models"]}
     missing = []
