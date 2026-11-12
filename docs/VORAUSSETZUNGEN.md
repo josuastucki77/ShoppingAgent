@@ -8,13 +8,13 @@ Prüfstand: 12. November 2026. Das Repository war zu Beginn leer.
 | Python | 3.12.6 vorhanden | Diagnose- und Vorbereitungsscripts ausführbar |
 | Node.js | 22.11.0 vorhanden | Für dieses Setup nicht erforderlich |
 | Git Bash | Vorhanden | `bash setup.sh` möglich |
-| WSL2 | `wsl --status` meldet keine Installation | WSL2 einrichten |
-| Docker Desktop / Compose | Kein Docker-Befehl und keine Installation an den üblichen Benutzer-/Systempfaden gefunden | Docker Desktop installieren, Linux-Container und WSL2 verwenden |
-| Ollama | `192.168.1.111:11434`, Version 0.19.0 erreichbar | Vorhandenen Server verwenden |
-| Chatmodell | `llama3.1:8b`, `llama3.2:latest`, `translategemma:4b` vorhanden | Llama 3.1 als Basis; echter einfacher Werkzeugaufruf erfolgreich |
-| Kontext | Beim Test 4.096 Tokens geladen | Separate Modellvariante mit 32.768 Tokens vorbereiten |
-| Embeddings | Kein Embedding-Modell in der Modellliste | `nomic-embed-text` auf dem Ollama-Server laden |
-| Galaxus MCP | Initialisierung und `search_products`-Werkzeugliste erfolgreich | Zugriff aus Docker beim Setup erneut prüfen |
+| WSL2 | Inzwischen vom Nutzer installiert | Vorhandene Installation verwenden |
+| Docker Desktop / Compose | Compose v5.7.0, Linux-Engine läuft | Containerstart erfolgreich geprüft |
+| Ollama | `192.168.1.111:11434`, Version 0.40.16 nach Nutzer-Update erreichbar | Vorhandenen Server verwenden |
+| Chatmodell | `qwen3.5:4b-q4_K_M` heruntergeladen | Qwen als Basis; Modell-, Schema- und MCP-Tests bestanden |
+| Kontext | Separate Variante `shopping-qwen3.5:latest` mit 65.536 Tokens eingerichtet | Hermes verlangt mindestens 64.000 Tokens |
+| Embeddings | `nomic-embed-text:latest` vorhanden; 768 Dimensionen erfolgreich geprüft | Bereits eingerichtet |
+| Galaxus MCP | Initialisierung und `search_products`-Werkzeugliste auch aus Docker erfolgreich | Bereits verbunden |
 
 ## Installation auf Windows
 
@@ -51,31 +51,41 @@ python scripts/check_services.py --inference
 ```
 
 `--apply` verändert den konfigurierten Ollama-Server: Es lädt das fehlende
-Embedding-Modell und legt eine zusätzliche Variante des bestehenden Llama an.
-Dieser Schritt wurde in der Vorbereitung noch nicht ausgeführt. Er benötigt
-keinen Zugriff auf die Desktopoberfläche des Ollama-Rechners.
+Basis- und Embedding-Modell und legt eine zusätzliche Qwen-Variante an.
+Dieser Schritt ist auf dem aktuellen Server bereits ausgeführt. Er benötigt
+keinen Zugriff auf die Desktopoberfläche des Ollama-Rechners. Eine bestehende
+Shopping-Modellvariante lässt sich mit zusätzlichem `--update-context`
+bewusst auf die konfigurierten 65.536 Tokens aktualisieren.
 
 Ein kostenpflichtiger Modellzugang, ein Galaxus-Konto und ein gehostetes
 Honcho-Konto sind für diese Konfiguration nicht nötig. Internetzugang bleibt
 für Softwaredownloads und Galaxus erforderlich. Der Docker-Stack benötigt
 LAN-Zugriff auf TCP-Port 11434 des Ollama-Servers.
 
-## Noch offene Abnahme
+## Geprüfter Betrieb
 
-- Compose-Konfiguration mit `docker compose config --quiet` und Containerstart.
-- Embedding-Aufruf und Modellvariante mit größerem Kontext.
-- Funktion der Kombination Honcho, lokalem Llama und dessen strukturierten Antworten.
-- Neue Hermes-Session und Containerneustart mit nachweislicher Honcho-Erinnerung.
-- Echte Galaxus-Recherche innerhalb von Hermes.
-- Erfolgreicher manueller Lauf des täglichen Hermes-Jobs.
+Die Ollama-VM hat laut Nutzer eine RTX 3070 per PCI-Passthrough und 16 GB RAM.
+Qwen3.5-4B Q4_K_M belegt bei 65.536 Kontext-Tokens gemessen 5,22 GB, vollständig
+auf der GPU. Die Einzeltests für Deutsch, längeren Eingangstext, Werkzeugaufrufe,
+strukturierte Antworten und echte Galaxus-Suche bestehen. Honcho hat mit Qwen
+fiktive Vorlieben extrahiert und in einer zweiten Sitzung korrekt bereitgestellt.
+Messungen und Grenzen: [MODELLTEST.md](MODELLTEST.md).
 
-Die Python-Tests prüfen Datenerhalt und Idempotenz des Bootstrap-Codes,
-Identitätsschutz, Job-Erkennung und MCP-Antwortverarbeitung. Sie ersetzen
-die oben genannten Integrationsprüfungen nicht.
+Das vollständige PowerShell-Setup wurde mehrfach erfolgreich ausgeführt.
+PostgreSQL, Redis und Honcho sind gesund; der Honcho-Worker und Hermes laufen.
+Der Scheduler ist aktiv, täglich um 09:00 Europe/Zurich. Die zehn Python-Tests
+prüfen unter anderem Datenerhalt, Idempotenz, Identitätsschutz, Kontextgröße
+und MCP-Antwortverarbeitung. Python-, Bash-, PowerShell- und Compose-Konfiguration
+wurden ebenfalls geprüft. Zugangsdaten und Laufzeitnachweise sind von Git ausgeschlossen.
 
-Erfolgreich geprüft: sechs Python-Tests, Python-/Bash-/PowerShell-Syntax,
-Compose-YAML gegen das offizielle Compose-Schema sowie eine direkte
-Galaxus-MCP-Suche mit drei echten Produkttreffern. Der lokale, von Git
-ausgeschlossene Nachweis liegt in `output/mcp-proof.json`. Das PowerShell-Setup
-wurde bis zur erwarteten Meldung über das fehlende Docker ausgeführt; `.env`
-mit zufälligem Datenbankpasswort ist bereits angelegt und wird von Git ignoriert.
+Das aktuelle Honcho-Plugin überspringt Cron-Agenten. Ein offizieller Hermes-
+Vorbereitungsschritt liest daher das Profil vor dem Job direkt aus Honcho.
+Normale Chats verwenden weiterhin das Plugin. Der isolierte Gedächtnistest
+ersetzt noch keine Abnahme persönlicher Chat-Erinnerungen nach einem vollständigen
+Containerneustart. Das sollte mit eigenen Vorlieben separat vorgeführt werden.
+
+Der ursprüngliche Versuch mit Llama 3.1 8B wurde nach acht Minuten ohne Antwort
+abgebrochen: rund 18 GB Gesamtbelegung bei rund 7 GB GPU-Anteil waren für diese
+VM ungeeignet. Granite 4 3B-H war schnell, lieferte im vollständigen Agenten aber
+fehlerhafte Werkzeugaufrufe und erfundene Produkte. Beide sind nicht mehr die
+Standardmodelle dieses Projekts.

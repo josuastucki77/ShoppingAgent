@@ -5,17 +5,18 @@ offiziellen Hermes-Image, dem offiziellen Galaxus-MCP und lokalem Honcho.
 Hermes und Honcho verwenden den vorhandenen Ollama-Server
 `192.168.1.111:11434`; ein Cloud-API-Key ist in dieser Variante nicht erforderlich.
 
-**Stand:** Projekt vorbereitet, lokale Tests erfolgreich. Der komplette
-Containerbetrieb, Honcho-Erinnerungen und der Tagesjob sind noch nicht live
-verifiziert, weil Docker/WSL2 auf dem Entwicklungs-PC fehlen. Siehe
-[PC-Voraussetzungen und Prüfstand](docs/VORAUSSETZUNGEN.md).
+**Stand:** Qwen3.5-4B ist auf der RTX 3070 eingerichtet und mit echten
+Modell-, MCP- und Honcho-Aufrufen geprüft. Messungen und Grenzen stehen im
+[Modelltest](docs/MODELLTEST.md); den Installationsstand dokumentieren die
+[PC-Voraussetzungen](docs/VORAUSSETZUNGEN.md).
 
 ## Voraussetzungen
 
 - Docker Desktop mit WSL2, laufender Docker Engine und Linux-Containern.
 - Verbindung vom PC **und aus Docker** zu `192.168.1.111:11434`.
-- Dort `llama3.1:8b`, ein Embedding-Modell und ausreichend Arbeitsspeicher
-  für ein Kontextfenster von 32.768 Tokens. Die größere Kontextvariante wird
+- Dort aktuelles Ollama, `qwen3.5:4b-q4_K_M`, ein Embedding-Modell und ausreichend Arbeitsspeicher
+  für ein Kontextfenster von 65.536 Tokens. Hermes verlangt mindestens 64.000.
+  Die größere Kontextvariante wird
   separat angelegt und verändert das ursprüngliche Modell nicht.
 - Internet für Docker-Images, Honcho-Quellcode, Hermes-Plugin und Galaxus-MCP.
 - Python 3.12+ für die optionalen Diagnose-/Modellvorbereitungsscripts.
@@ -37,11 +38,18 @@ python scripts/check_services.py --inference
 ```
 
 Den Kopierbefehl nur ausführen, wenn `.env` noch nicht existiert. Das Setup kann
-die Datei auch selbst anlegen. `--apply` lädt `nomic-embed-text:latest`
-(ungefähr 274 MB) auf den Ollama-Server und erzeugt aus `llama3.1:8b`
-die Variante `shopping-llama3.1:latest` mit `num_ctx=32768`. Bereits vorhandene
+die Datei auch selbst anlegen. `--apply` lädt das fehlende Basismodell
+`qwen3.5:4b-q4_K_M` (rund 3,3 GB) und `nomic-embed-text:latest`
+(ungefähr 274 MB) auf den Ollama-Server und erzeugt
+die Variante `shopping-qwen3.5:latest` mit `num_ctx=65536` und Temperatur 0,2. Bereits vorhandene
 Modelle werden erhalten. Ohne `--apply` zeigt das Script nur die geplanten Werte.
 Ein größerer Kontext braucht auf dem Ollama-Rechner zusätzlich RAM/VRAM.
+
+Für eine bereits angelegte Variante mit kleinerem Kontext:
+
+```powershell
+python scripts/prepare_ollama.py --apply --update-context
+```
 
 In `.env` lassen sich Server, Modelle, Nutzeridentität, Zeitzone und Zeitplan
 vor dem ersten Start ändern. Embedding-Modell und Vektordimensionen müssen
@@ -68,6 +76,17 @@ Quellcode-Commit und startet PostgreSQL, Redis, Honcho und den Hintergrundworker
 Danach schreibt es Hermes-Konfiguration, Persönlichkeit und Honcho-Anbindung,
 installiert das Honcho-Plugin inklusive Abhängigkeiten und erstellt den
 Hermes-Job `shopping-daily` für täglich **09:00 Europe/Zurich**.
+
+Das aktuelle Honcho-Plugin deaktiviert sich innerhalb von Cron-Agenten.
+Deshalb liest `scripts/cron_context.py` vor jedem Lauf das aktuelle Profil
+direkt aus der lokalen Honcho-API. Hermes injiziert die Ausgabe über seine
+offizielle `--script`-Funktion. Dieser Schritt schreibt keine Cron-Texte in das
+Nutzergedächtnis. Im interaktiven Chat verwendet Hermes die Honcho-Werkzeuge.
+
+Der veröffentlichte Hermes-Tag lautet `v0.23.1` mit führendem `v`.
+Vor dem Honcho-API-Start passt das offizielle `configure_embeddings.py` die
+anfangs mit 1.536 Dimensionen angelegten leeren Vektorspalten auf 768 an.
+Bei bereits befüllten, inkompatiblen Vektorspalten bricht es ab.
 
 Für den ersten Start nach `Copy-Item .env.example .env` ergänzt das Setup das
 fehlende Datenbankpasswort automatisch. Es sind keine nachträglichen
@@ -156,8 +175,8 @@ Ergebnisse liegen unter `output/<job-id>/...md`. Erfolgreich ist der Test erst,
 wenn eine echte, zu den gespeicherten Vorlieben passende Empfehlung mit Preis
 und Link vorliegt und der Job einen erfolgreichen Lauf meldet. MCP-Ausfälle
 müssen als Fehler erkennbar sein; sie gelten nicht als erfolgreiche Recherche.
-Der Prompt berücksichtigt die bisherigen Dateien, um Wiederholungen zu
-reduzieren; die Auswahl hängt dabei vom Modell ab.
+Das Vorbereitungsscript übergibt Produktlinks aus Berichten der letzten
+30 Tage, um Wiederholungen zu reduzieren; die Auswahl hängt vom Modell ab.
 
 Der PC, Docker und der Ollama-Server müssen zur Ausführungszeit eingeschaltet
 sein. Für unterbrechungsfreien Betrieb eignet sich später ein dauerhaft
@@ -177,7 +196,9 @@ Hermes-Dienst wird zur Konfiguration kurz gestoppt; laufende Chats vorher beende
 Ein Identitätswechsel wird abgebrochen, damit vorhandenes Honcho-Wissen nicht
 versehentlich einem anderen Nutzer zugeordnet wird.
 
-Ein bestehender Tagesjob bleibt unverändert. Um seinen Zeitplan später
+Bei einem ursprünglichen, noch unveränderten Shopping-Prompt ergänzt das Setup
+einmalig den Honcho-Vorbereitungsschritt. Eigene Prompts, Scripts und Zeitpläne
+bleiben erhalten. Um den Zeitplan später
 anzupassen, Hermes verwenden:
 
 ```powershell

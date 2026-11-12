@@ -19,36 +19,47 @@ x-honcho: &honcho
     EMBEDDING_VECTOR_DIMENSIONS: ${OLLAMA_EMBEDDING_DIMENSIONS:-768}
     EMBEDDING_MAX_INPUT_TOKENS: "2048"
     EMBEDDING_MODEL_CONFIG__MAX_BATCH_SIZE: "8"
-    DERIVER_MODEL_CONFIG__MODEL: &ollama-model ${OLLAMA_MODEL:-shopping-llama3.1:latest}
+    DERIVER_MODEL_CONFIG__MODEL: &ollama-model ${OLLAMA_MODEL:-shopping-qwen3.5:latest}
+    DERIVER_MODEL_CONFIG__THINKING_EFFORT: "none"
     DERIVER_MODEL_CONFIG__OVERRIDES__BASE_URL: *ollama-url
     DERIVER_WORKERS: "1"
     DERIVER_FLUSH_ENABLED: "true"
     SUMMARY_MODEL_CONFIG__MODEL: *ollama-model
+    SUMMARY_MODEL_CONFIG__THINKING_EFFORT: "none"
     SUMMARY_MODEL_CONFIG__OVERRIDES__BASE_URL: *ollama-url
     DIALECTIC_LEVELS__minimal__MODEL_CONFIG__MODEL: *ollama-model
+    DIALECTIC_LEVELS__minimal__MODEL_CONFIG__THINKING_EFFORT: "none"
     DIALECTIC_LEVELS__minimal__MODEL_CONFIG__OVERRIDES__BASE_URL: *ollama-url
     DIALECTIC_LEVELS__low__MODEL_CONFIG__MODEL: *ollama-model
+    DIALECTIC_LEVELS__low__MODEL_CONFIG__THINKING_EFFORT: "none"
     DIALECTIC_LEVELS__low__MODEL_CONFIG__OVERRIDES__BASE_URL: *ollama-url
     DIALECTIC_LEVELS__medium__MODEL_CONFIG__MODEL: *ollama-model
+    DIALECTIC_LEVELS__medium__MODEL_CONFIG__THINKING_EFFORT: "none"
     DIALECTIC_LEVELS__medium__MODEL_CONFIG__OVERRIDES__BASE_URL: *ollama-url
     DIALECTIC_LEVELS__high__MODEL_CONFIG__MODEL: *ollama-model
+    DIALECTIC_LEVELS__high__MODEL_CONFIG__THINKING_EFFORT: "none"
     DIALECTIC_LEVELS__high__MODEL_CONFIG__OVERRIDES__BASE_URL: *ollama-url
     DIALECTIC_LEVELS__max__MODEL_CONFIG__MODEL: *ollama-model
+    DIALECTIC_LEVELS__max__MODEL_CONFIG__THINKING_EFFORT: "none"
     DIALECTIC_LEVELS__max__MODEL_CONFIG__OVERRIDES__BASE_URL: *ollama-url
     DREAM_DEDUCTION_MODEL_CONFIG__MODEL: *ollama-model
+    DREAM_DEDUCTION_MODEL_CONFIG__THINKING_EFFORT: "none"
     DREAM_DEDUCTION_MODEL_CONFIG__OVERRIDES__BASE_URL: *ollama-url
     DREAM_INDUCTION_MODEL_CONFIG__MODEL: *ollama-model
+    DREAM_INDUCTION_MODEL_CONFIG__THINKING_EFFORT: "none"
     DREAM_INDUCTION_MODEL_CONFIG__OVERRIDES__BASE_URL: *ollama-url
     TZ: ${TZ:-Europe/Zurich}
 
 x-hermes: &hermes
-  image: ${HERMES_IMAGE:-nousresearch/hermes-agent:0.23.1}
+  image: ${HERMES_IMAGE:-nousresearch/hermes-agent:v0.23.1}
+  working_dir: /opt/data
   environment:
     HERMES_HOME: /opt/data
     OPENAI_API_KEY: ${OLLAMA_API_KEY:-ollama}
     OPENAI_BASE_URL: *ollama-url
     OLLAMA_BASE_URL: *ollama-url
     OLLAMA_MODEL: *ollama-model
+    OLLAMA_CONTEXT_LENGTH: ${OLLAMA_CONTEXT_LENGTH:-65536}
     OLLAMA_EMBEDDING_MODEL: ${OLLAMA_EMBEDDING_MODEL:-nomic-embed-text:latest}
     OLLAMA_EMBEDDING_DIMENSIONS: ${OLLAMA_EMBEDDING_DIMENSIONS:-768}
     OLLAMA_API_KEY: ${OLLAMA_API_KEY:-ollama}
@@ -96,7 +107,9 @@ services:
 
   honcho:
     <<: *honcho
-    entrypoint: [sh, docker/entrypoint.sh]
+    entrypoint: [sh, /project/start_honcho.sh]
+    volumes:
+      - ./scripts/start_honcho.sh:/project/start_honcho.sh:ro
     depends_on:
       database:
         condition: service_healthy
@@ -120,7 +133,7 @@ services:
     <<: *hermes
     profiles: [setup]
     restart: "no"
-    command: [python, /project/scripts/bootstrap.py]
+    command: [/opt/hermes/.venv/bin/python, /project/scripts/bootstrap.py]
     depends_on:
       honcho:
         condition: service_healthy

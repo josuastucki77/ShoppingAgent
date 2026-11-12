@@ -23,8 +23,8 @@ docker compose config --quiet
 mkdir -p output
 
 # Erst die externen Abhaengigkeiten pruefen, bevor der Stack gebaut wird.
-docker compose run --rm --no-deps hermes-init python /project/scripts/check_services.py
-docker compose build honcho honcho-deriver
+docker compose run --rm --no-deps hermes-init /opt/hermes/.venv/bin/python /project/scripts/check_services.py
+docker compose build honcho
 docker compose up -d --wait database redis honcho
 docker compose up -d honcho-deriver
 # Keine parallelen Schreibvorgaenge waehrend einer erneuten Konfiguration.

@@ -3,6 +3,7 @@
 import argparse
 import json
 import os
+import re
 import sys
 import urllib.request
 from pathlib import Path
@@ -35,7 +36,7 @@ def json_request(url, body=None, timeout=15):
 def check_ollama(inference=False):
     base = os.getenv("OLLAMA_BASE_URL", "http://192.168.1.111:11434/v1").rstrip("/")
     native = base.removesuffix("/v1")
-    model = os.getenv("OLLAMA_MODEL", "shopping-llama3.1:latest")
+    model = os.getenv("OLLAMA_MODEL", "shopping-qwen3.5:latest")
     embedding = os.getenv("OLLAMA_EMBEDDING_MODEL", "nomic-embed-text:latest")
     names = {m["name"] for m in json_request(native + "/api/tags")["models"]}
     missing = []
@@ -45,9 +46,14 @@ def check_ollama(inference=False):
     if missing:
         raise RuntimeError("Auf dem Ollama-Server fehlen: " + ", ".join(missing)
                            + ". Modelle vorbereiten: python scripts/prepare_ollama.py --apply")
-    capabilities = json_request(native + "/api/show", {"model": model}).get("capabilities", [])
-    if "tools" not in capabilities:
+    info = json_request(native + "/api/show", {"model": model})
+    if "tools" not in info.get("capabilities", []):
         raise RuntimeError(f"{model} meldet keine Tool-Calling-Unterstuetzung.")
+    context = re.search(r"(?m)^\s*num_ctx\s+(\d+)\s*$", info.get("parameters", ""))
+    if not context or int(context.group(1)) < 64000:
+        raise RuntimeError(f"{model} muss mindestens 64000 Kontext-Tokens bereitstellen. "
+                           "OLLAMA_CONTEXT_LENGTH=65536 setzen und "
+                           "python scripts/prepare_ollama.py --apply --update-context ausfuehren.")
     print(f"Ollama erreichbar: {model} (Werkzeugaufrufe) und {embedding} vorhanden.")
     if inference:
         response = json_request(base + "/chat/completions", {

@@ -23,8 +23,8 @@ Invoke-Docker compose version
 Invoke-Docker info --format '{{.OSType}}'
 Invoke-Docker compose config --quiet
 New-Item -ItemType Directory -Path 'output' -Force | Out-Null
-Invoke-Docker compose run --rm --no-deps hermes-init python /project/scripts/check_services.py
-Invoke-Docker compose build honcho honcho-deriver
+Invoke-Docker compose run --rm --no-deps hermes-init /opt/hermes/.venv/bin/python /project/scripts/check_services.py
+Invoke-Docker compose build honcho
 Invoke-Docker compose up -d --wait database redis honcho
 Invoke-Docker compose up -d honcho-deriver
 Invoke-Docker compose stop hermes
